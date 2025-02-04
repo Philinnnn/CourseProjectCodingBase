@@ -26,24 +26,35 @@ namespace CourseProject.Lab2
         private void RunReedSolomon(object sender, RoutedEventArgs e)
         {
             algorithm = new ReedSolomonCoding();
-            RunAlgorithm();
+            RunAlgorithm(true);
         }
 
-        private void RunAlgorithm()
+        private void RunAlgorithm(bool introduceError = false)
         {
             string input = InputTextBox.Text;
+            string originalEncodedText = algorithm.Encode(input);
 
-            string encodedText = algorithm.Encode(input);
+            string encodedTextForDecoding = originalEncodedText;
 
-            string decodedText = algorithm.Decode(encodedText);
+            string errorMessage = "";
+            if (introduceError && algorithm is ReedSolomonCoding rs)
+            {
+                string corruptedText = rs.IntroduceError(originalEncodedText);
+                errorMessage = $"Имитированное сообщение с ошибкой: {corruptedText}\n";
+                encodedTextForDecoding = corruptedText;
+            }
 
-            ResultText.Text = $"Закодированное сообщение: {encodedText}\n";
+            string decodedText = algorithm.Decode(encodedTextForDecoding);
+
+            ResultText.Text = $"Оригинальное закодированное сообщение: {originalEncodedText}\n";
+            if (!string.IsNullOrEmpty(errorMessage))
+                ResultText.Text += errorMessage;
             ResultText.Text += $"Декодированное сообщение: {decodedText}\n";
 
             bool isCorrect = input == decodedText;
             ResultText.Text += $"Корректность декодирования: {(isCorrect ? "Успешно" : "Ошибка")}\n";
 
-            double efficiency = algorithm.CalculateEfficiency(input, encodedText);
+            double efficiency = algorithm.CalculateEfficiency(input, originalEncodedText);
             ResultText.Text += $"Эффективность кодирования: {efficiency:P2}";
         }
     }

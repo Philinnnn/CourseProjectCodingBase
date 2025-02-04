@@ -1,9 +1,12 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace CourseProject.Lab2
 {
     public class ReedSolomonCoding : IEncodingAlgorithm
     {
+        private const int PARITY_BYTES = 4;
+
         public string Encode(string input)
         {
             byte[] data = Encoding.UTF8.GetBytes(input);
@@ -17,43 +20,28 @@ namespace CourseProject.Lab2
         public string Decode(string encodedInput)
         {
             byte[] encoded = HexStringToBytes(encodedInput);
-            if (encoded.Length < 3)
+            if (encoded.Length < PARITY_BYTES + 1)
                 throw new ArgumentException("Недостаточная длина блока для декодирования RS.");
-            int k = encoded.Length - 2;
+
+            int k = encoded.Length - PARITY_BYTES;
             byte[] data = new byte[k];
-            byte[] parity = new byte[2];
+            byte[] parity = new byte[PARITY_BYTES];
             Array.Copy(encoded, 0, data, 0, k);
-            Array.Copy(encoded, k, parity, 0, 2);
+            Array.Copy(encoded, k, parity, 0, PARITY_BYTES);
 
             byte[] syndrome = ComputeSyndrome(data, parity);
-            if (syndrome[0] == 0 && syndrome[1] == 0)
+            if (IsZero(syndrome))
             {
                 return Encoding.UTF8.GetString(data);
             }
             else
             {
-                byte[] correctedData = new byte[data.Length];
-                Array.Copy(data, correctedData, data.Length);
-                bool corrected = false;
-                for (int i = 0; i < correctedData.Length; i++)
-                {
-                    byte original = correctedData[i];
-                    for (int e = 1; e < 256; e++)
-                    {
-                        correctedData[i] = (byte)(original ^ (byte)e);
-                        byte[] newSyndrome = ComputeSyndrome(correctedData, parity);
-                        if (newSyndrome[0] == 0 && newSyndrome[1] == 0)
-                        {
-                            corrected = true;
-                            break;
-                        }
-                    }
-                    if (corrected)
-                        break;
-                    else
-                        correctedData[i] = original;
-                }
-                return Encoding.UTF8.GetString(correctedData);
+                Console.WriteLine("Обнаружена ошибка в данных!");
+
+                byte[] correctedData = (byte[])data.Clone();
+                bool corrected = TryCorrectErrors(correctedData, parity);
+
+                return Encoding.UTF8.GetString(corrected ? correctedData : data);
             }
         }
 
@@ -66,11 +54,18 @@ namespace CourseProject.Lab2
 
         private byte[] ComputeParity(byte[] data)
         {
-            byte[] parity = new byte[2];
-            foreach (byte b in data)
+            byte[] parity = new byte[PARITY_BYTES];
+
+            for (int i = 0; i < PARITY_BYTES; i++)
             {
-                parity[0] = GF256.Add(parity[0], b);
-                parity[1] = GF256.Add(parity[1], GF256.Multiply(b, 2));
+                byte sum = 0;
+                for (int j = 0; j < data.Length; j++)
+                {
+                    byte factor = GF256.Pow(2, i * j);
+                    byte term = GF256.Multiply(data[j], factor);
+                    sum = GF256.Add(sum, term);
+                }
+                parity[i] = sum;
             }
             return parity;
         }
@@ -78,7 +73,47 @@ namespace CourseProject.Lab2
         private byte[] ComputeSyndrome(byte[] data, byte[] parity)
         {
             byte[] computed = ComputeParity(data);
-            return new byte[] { (byte)(computed[0] ^ parity[0]), (byte)(computed[1] ^ parity[1]) };
+            byte[] syndrome = new byte[PARITY_BYTES];
+            for (int i = 0; i < PARITY_BYTES; i++)
+            {
+                syndrome[i] = GF256.Add(computed[i], parity[i]);
+            }
+            return syndrome;
+        }
+
+        private bool TryCorrectErrors(byte[] data, byte[] parity)
+        {
+            byte[] syndrome = ComputeSyndrome(data, parity);
+            if (IsZero(syndrome)) return true;
+
+            for (int i = 0; i < data.Length; i++)
+            {
+                byte original = data[i];
+                for (int e = 1; e < 256; e++)
+                {
+                    data[i] = (byte)(original ^ (byte)e);
+                    byte[] newSyndrome = ComputeSyndrome(data, parity);
+                    if (IsZero(newSyndrome))
+                    {
+                        Console.WriteLine($"Ошибка исправлена в байте {i}: {original} -> {data[i]}");
+                        return true;
+                    }
+                }
+                data[i] = original;
+            }
+
+            Console.WriteLine("Не удалось исправить ошибку!");
+            return false;
+        }
+
+        private bool IsZero(byte[] array)
+        {
+            foreach (byte b in array)
+            {
+                if (b != 0)
+                    return false;
+            }
+            return true;
         }
 
         private byte[] HexStringToBytes(string hex)
@@ -88,6 +123,27 @@ namespace CourseProject.Lab2
             for (int i = 0; i < numberChars; i += 2)
                 bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
             return bytes;
+        }
+
+        public string IntroduceError(string encodedInput)
+        {
+            byte[] encoded = HexStringToBytes(encodedInput);
+            Random random = new Random();
+            // Количество ошибок: от 1 до 2
+            int errors = random.Next(1, 3);
+            for (int i = 0; i < errors; i++)
+            {
+                int errorIndex = random.Next(encoded.Length - PARITY_BYTES);
+                byte original = encoded[errorIndex];
+                byte errorValue;
+                do
+                {
+                    errorValue = (byte)random.Next(1, 256);
+                } while (errorValue == original);
+                encoded[errorIndex] ^= errorValue;
+                Console.WriteLine($"Ошибка внесена в байт {errorIndex}: {original} -> {encoded[errorIndex]}");
+            }
+            return BitConverter.ToString(encoded).Replace("-", "");
         }
     }
 
@@ -123,9 +179,8 @@ namespace CourseProject.Lab2
         {
             if (a == 0 || b == 0)
                 return 0;
-            int logA = log[a];
-            int logB = log[b];
-            return exp[logA + logB];
+            int index = log[a] + log[b];
+            return exp[index % 255];
         }
 
         public static byte Divide(byte a, byte b)
@@ -134,12 +189,20 @@ namespace CourseProject.Lab2
                 throw new DivideByZeroException();
             if (a == 0)
                 return 0;
-            int logA = log[a];
-            int logB = log[b];
-            int diff = logA - logB;
+            int diff = log[a] - log[b];
             if (diff < 0)
                 diff += 255;
             return exp[diff];
+        }
+
+        public static byte Pow(byte a, int power)
+        {
+            if (power == 0)
+                return 1;
+            if (a == 0)
+                return 0;
+            int resultLog = (log[a] * power) % 255;
+            return exp[resultLog];
         }
     }
 }
