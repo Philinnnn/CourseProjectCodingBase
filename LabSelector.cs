@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
 namespace CourseProject
 {
-    class LabSelector
+    public class LabSelector
     {
-        public void OpenLab(int labNumber)
+        public static void OpenLab(int labNumber)
         {
             Window? labWindow = labNumber switch
             {

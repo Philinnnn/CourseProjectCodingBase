@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Controls;
 
 namespace CourseProject
 {
@@ -11,10 +12,20 @@ namespace CourseProject
 
         private void OpenLab(object sender, RoutedEventArgs e)
         {
-            if (LabList.SelectedIndex == 0)
+            if (LabList.SelectedItem is ListBoxItem selectedItem)
             {
-                var lab2Window = new Lab2.Lab2Window();
-                lab2Window.Show();
+                if (int.TryParse(selectedItem.Tag?.ToString(), out int labNumber))
+                {
+                    LabSelector.OpenLab(labNumber);
+                }
+                else
+                {
+                    MessageBox.Show("Неверный идентификатор лабораторной работы.");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Пожалуйста, выберите лабораторную работу.");
             }
         }
     }
