@@ -5,7 +5,6 @@ namespace CourseProject.Lab2
     public class ShannonFanoCoding : IEncodingAlgorithm
     {
         private Dictionary<char, string>? shannonFanoTable;
-
         public string Encode(string input)
         {
             var frequencies = input.GroupBy(c => c)
@@ -16,7 +15,6 @@ namespace CourseProject.Lab2
             GenerateCodes(frequencies, "");
             return string.Concat(input.Select(c => shannonFanoTable[c]));
         }
-
         public string Decode(string encodedInput)
         {
             var reverseTable = shannonFanoTable.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
@@ -39,7 +37,6 @@ namespace CourseProject.Lab2
             int encodedSize = encodedInput.Length;
             return 1 - (double)encodedSize / originalSize;
         }
-
         private void GenerateCodes(List<SymbolFrequency> symbols, string prefix)
         {
             if (symbols.Count == 1)
@@ -67,7 +64,6 @@ namespace CourseProject.Lab2
                 GenerateCodes(right, prefix + "1");
         }
     }
-
     public class SymbolFrequency
     {
         public char Symbol { get; set; }

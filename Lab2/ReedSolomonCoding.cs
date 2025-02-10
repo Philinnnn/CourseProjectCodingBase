@@ -129,8 +129,8 @@ namespace CourseProject.Lab2
         {
             byte[] encoded = HexStringToBytes(encodedInput);
             Random random = new Random();
-            // Количество ошибок: от 1 до 2
             int errors = random.Next(1, 3);
+            Console.WriteLine($"Количество ошибок: {errors}");
             for (int i = 0; i < errors; i++)
             {
                 int errorIndex = random.Next(encoded.Length - PARITY_BYTES);

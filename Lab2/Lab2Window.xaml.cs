@@ -11,24 +11,6 @@ namespace CourseProject.Lab2
             InitializeComponent();
         }
 
-        private void RunHuffman(object sender, RoutedEventArgs e)
-        {
-            algorithm = new HuffmanCoding();
-            RunAlgorithm();
-        }
-
-        private void RunShannonFano(object sender, RoutedEventArgs e)
-        {
-            algorithm = new ShannonFanoCoding();
-            RunAlgorithm();
-        }
-
-        private void RunReedSolomon(object sender, RoutedEventArgs e)
-        {
-            algorithm = new ReedSolomonCoding();
-            RunAlgorithm(true);
-        }
-
         private void RunAlgorithm(bool introduceError = false)
         {
             string input = InputTextBox.Text;
@@ -56,6 +38,39 @@ namespace CourseProject.Lab2
 
             double efficiency = algorithm.CalculateEfficiency(input, originalEncodedText);
             ResultText.Text += $"Эффективность кодирования: {efficiency:P2}";
+        }
+
+        private void RunHuffman(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(InputTextBox.Text))
+                return;
+
+            algorithm = new HuffmanCoding();
+            RunAlgorithm();
+        }
+
+        private void RunShannonFano(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(InputTextBox.Text))
+                return;
+
+            algorithm = new ShannonFanoCoding();
+            RunAlgorithm();
+        }
+
+        private void RunReedSolomon(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(InputTextBox.Text))
+                return;
+
+            algorithm = new ReedSolomonCoding();
+            RunAlgorithm(true);
+        }
+
+        private void ClearFields(object sender, RoutedEventArgs e)
+        {
+            InputTextBox.Text = string.Empty;
+            ResultText.Text = string.Empty;
         }
     }
 }

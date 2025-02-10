@@ -2,11 +2,38 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Лабораторная 2" Height="350" Width="700">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="#FF6200EE"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Width" Value="120"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="10"/>
+            <Setter Property="Padding" Value="5"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="30"/>
+            <Setter Property="Width" Value="250"/>
+        </Style>
+    </Window.Resources>
     <Grid>
-        <TextBox Name="InputTextBox" Height="30" Width="250" Margin="0,-200,0,0" HorizontalAlignment="Center"/>
-        <Button Content="Хаффман" Click="RunHuffman" Height="30" Width="100" Margin="-250,-100,0,0"/>
-        <Button Content="Шеннон-Фано" Click="RunShannonFano" Height="30" Width="100" Margin="0,-100,0,0"/>
-        <Button Content="Рид-Соломон" Click="RunReedSolomon" Height="30" Width="100" Margin="250,-100,0,0"/>
-        <TextBlock Name="ResultText" Text="" Margin="0,100,20,0" Width="550" Height="150"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBox Name="InputTextBox" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Top" Grid.Row="1" Margin="0,41,0,0">
+            <Button Content="Хаффман" Click="RunHuffman"/>
+            <Button Content="Шеннон-Фано" Click="RunShannonFano"/>
+            <Button Content="Рид-Соломон" Click="RunReedSolomon"/>
+        </StackPanel>
+        <TextBlock Name="ResultText" Text="" Margin="75,0,55,10" Height="95" VerticalAlignment="Bottom" TextWrapping="Wrap" Grid.Row="1"/>
+        <Button Content="Очистить" Click="ClearFields" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="2" Margin="0,0,10,19"/>
     </Grid>
 </Window>
