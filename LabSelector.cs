@@ -9,6 +9,7 @@ namespace CourseProject
             Window? labWindow = labNumber switch
             {
                 2 => new Lab2.Lab2Window(),
+                3 => new Lab3.Lab3Window(),
                 _ => null
             };
 

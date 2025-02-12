@@ -57,7 +57,6 @@ namespace CourseProject.Lab2
             algorithm = new ShannonFanoCoding();
             RunAlgorithm();
         }
-
         private void RunReedSolomon(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrWhiteSpace(InputTextBox.Text))
