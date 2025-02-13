@@ -27,7 +27,6 @@ namespace Lab3
             GenerateSignal();
         }
 
-        // Генерация тестового сигнала: синусоида + шум
         private void GenerateSignal()
         {
             int sampleCount = (int)(sampleRate * duration);
@@ -45,10 +44,8 @@ namespace Lab3
             FilterSignal();
         }
 
-        // Передача сигнала через дискретный канал с потерями
         private void ProcessSignal()
         {
-            // Клонирование исходного сигнала
             ProcessedSignal = (double[])OriginalSignal.Clone();
 
             // Добавление шума каждые 10 точек
@@ -68,7 +65,6 @@ namespace Lab3
             }
         }
 
-        // Фильтрация сигнала для имитации аналогового канала (скользящий средний фильтр)
         private void FilterSignal()
         {
             int n = ProcessedSignal.Length;

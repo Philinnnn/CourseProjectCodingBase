@@ -32,7 +32,7 @@ namespace CourseProject.Lab3
             // sampleRate = 1000 Гц, duration = 1 сек, noiseLevel = 0.2, lossPercentage = 0.1 (10%)
             processor = new SignalProcessor(1000, 1.0, frequency, 0.2, lossPercentage/100);
             MessageBox.Show($"Сигнал сгенерирован с частотой {frequency:F2} Гц и " +
-                $"процентом потерь {lossPercentage:F2}.", "Генерация сигнала");
+                $"процентом потерь {lossPercentage:F2}%.", "Генерация сигнала");
         }
 
         private void ShowGraphs(object sender, RoutedEventArgs e)
