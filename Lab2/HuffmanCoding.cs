@@ -4,26 +4,31 @@ namespace CourseProject.Lab2
 {
     public class HuffmanCoding : IEncodingAlgorithm
     {
-        private Dictionary<char, string>? huffmanTable;
+        public Dictionary<char, string>? HuffmanTable;
         private HuffmanNode? root;
 
         public string Encode(string input)
         {
             BuildHuffmanTree(input);
-            return string.Concat(input.Select(c => huffmanTable[c]));
+            return string.Concat(input.Select(c => HuffmanTable[c]));
         }
 
         public string Decode(string encodedInput)
         {
+            if (HuffmanTable == null)
+                throw new NullReferenceException("HuffmanTable is null. Невозможно декодировать без таблицы.");
+            
+            var inverseTable = HuffmanTable.ToDictionary(kv => kv.Value, kv => kv.Key);
+
             var result = new StringBuilder();
-            var current = root;
+            string currentCode = "";
             foreach (var bit in encodedInput)
             {
-                current = bit == '0' ? current.Left : current.Right;
-                if (current.IsLeaf())
+                currentCode += bit;
+                if (inverseTable.ContainsKey(currentCode))
                 {
-                    result.Append(current.Symbol);
-                    current = root;
+                    result.Append(inverseTable[currentCode]);
+                    currentCode = "";
                 }
             }
             return result.ToString();
@@ -53,7 +58,7 @@ namespace CourseProject.Lab2
                 nodes.Add(new HuffmanNode(left, right));
             }
             root = nodes[0];
-            huffmanTable = new Dictionary<char, string>();
+            HuffmanTable = new Dictionary<char, string>();
             GenerateHuffmanCodes(root, "");
         }
 
@@ -61,7 +66,7 @@ namespace CourseProject.Lab2
         {
             if (node.IsLeaf())
             {
-                huffmanTable[node.Symbol] = code;
+                HuffmanTable[node.Symbol] = code;
                 return;
             }
             GenerateHuffmanCodes(node.Left, code + "0");

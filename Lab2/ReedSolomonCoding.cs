@@ -6,7 +6,7 @@ namespace CourseProject.Lab2
     public class ReedSolomonCoding : IEncodingAlgorithm
     {
         private const int PARITY_BYTES = 4;
-
+        
         public string Encode(string input)
         {
             byte[] data = Encoding.UTF8.GetBytes(input);
