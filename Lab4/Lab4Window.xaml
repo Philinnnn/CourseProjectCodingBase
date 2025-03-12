@@ -60,11 +60,12 @@
                 <Button Content="Сохранить текстовый файл" Click="SaveTextFileButton_Click"/>
                 <Button Content="Сохранить бинарный файл" Click="SaveBinaryFileButton_Click"/>
                 <Button Content="Выбрать директорию" Click="SelectSaveDirectoryButton_Click"/>
+                <Button Content="Очистить" Click="ClearButton_Click"/>
             </WrapPanel>
             <!-- Группа текстовых полей -->
             <StackPanel Orientation="Vertical" HorizontalAlignment="Center">
                 <TextBox Name="InputTextBox" IsReadOnly="True" Text="Содержимое файла"/>
-                <TextBox Name="InputFileSizeTextBox" IsReadOnly="True" Text="Размер файла"/>
+                <TextBox Name="InputFileSizeTextBox" IsReadOnly="True" Text="Размер исходного файла"/>
                 <TextBox Name="CompressedTextBox" IsReadOnly="True" Text="Сжатое содержимое"/>
                 <TextBox Name="CompressedFileSizeTextBox" IsReadOnly="True" Text="Размер сжатого файла"/>
             </StackPanel>

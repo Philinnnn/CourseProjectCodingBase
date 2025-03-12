@@ -7,33 +7,56 @@ using System.Text;
 
 namespace CourseProject.Lab4
 {
-    public partial class Lab4Window : Window
+    public partial class Lab4Window
     {
         private string inputText = "";
         private string encodedText = "";
-        private string? saveDirectory = "C:\\Users\\Arman\\Desktop"; 
+
+        private string? saveDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Lab4");
         
         private HuffmanCoding huffmanCoder = new();
         private Dictionary<char, string>? huffmanTable;
+        
         public Lab4Window()
         {
             InitializeComponent();
         }
         
+        private void ClearData()
+        {
+            inputText = "";
+            encodedText = "";
+            huffmanTable = null;
+            huffmanCoder.HuffmanTable = null;
+            InputTextBox.Text = "Содержимое файла";
+            CompressedTextBox.Text = "Сжатое содержимое";
+            InputFileSizeTextBox.Text = "Размер исходного файла";
+            CompressedFileSizeTextBox.Text = "Размер сжатого файла";
+        }
+        
+        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            ClearData();
+        }
+        
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
         {
+            ClearData();
+            
             OpenFileDialog openFileDialog = new OpenFileDialog();
-            if (saveDirectory != null)
+            openFileDialog.Filter = "Text files (*.txt)|*.txt|Binary files (*.bin)|*.bin";
+            if (openFileDialog.ShowDialog() == true)
             {
-                var huffmanTablePath = Path.Combine(saveDirectory, "HuffmanTable.json");
-                openFileDialog.Filter = "Text files (*.txt)|*.txt|Binary files (*.bin)|*.bin";
-                if (openFileDialog.ShowDialog() == true)
+
+                var fileDirectory = Path.GetDirectoryName(openFileDialog.FileName);
+                if (fileDirectory != null)
                 {
+                    var huffmanTablePath = Path.Combine(fileDirectory, "HuffmanTable.json");
                     var extension = Path.GetExtension(openFileDialog.FileName).ToLower();
                     if (extension == ".bin")
                     {
                         var fileBytes = File.ReadAllBytes(openFileDialog.FileName);
-                        var binaryContent = Encoding.UTF8.GetString(fileBytes);
+                        var binaryContent = BitPacker.UnpackBits(fileBytes);
                         if (File.Exists(huffmanTablePath))
                         {
                             var serializer = new DataContractJsonSerializer(typeof(Dictionary<char, string>)); 
@@ -42,38 +65,42 @@ namespace CourseProject.Lab4
                                 huffmanTable = serializer.ReadObject(stream) as Dictionary<char, string>;
                             }
                         }
+                        else
+                        {
+                            MessageBox.Show("Файл таблицы HuffmanTable.json не найден в " + fileDirectory, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
                         huffmanCoder.HuffmanTable = huffmanTable;
                         var decodedText = huffmanCoder.Decode(binaryContent);
                         inputText = decodedText;
                         encodedText = binaryContent;
+                        CompressedFileSizeTextBox.Text = (CalculateFileSize(openFileDialog.FileName) / 1024).ToString("F2") + " KB";
                     }
                     else
                     {
                         inputText = File.ReadAllText(openFileDialog.FileName);
                         encodedText = huffmanCoder.Encode(inputText);
                         huffmanTable = huffmanCoder.HuffmanTable;
-                        ExportHuffmanTableToJson(huffmanTablePath);
+                        var huffmanTablePathText = Path.Combine(Path.GetDirectoryName(openFileDialog.FileName) ?? string.Empty, "HuffmanTable.json");
+                        ExportHuffmanTableToJson(huffmanTablePathText);
+                        InputFileSizeTextBox.Text = (CalculateFileSize(openFileDialog.FileName) / 1024).ToString("F2") + " KB";
                     }
-                    InputTextBox.Text = inputText;
-                    InputFileSizeTextBox.Text = (CalculateFileSize(inputText, false) / 1024).ToString("F2") + " KB";
-
-                    CompressedTextBox.Text = encodedText;
-                    CompressedFileSizeTextBox.Text = (CalculateFileSize(encodedText, true) / 1024).ToString("F2") + " KB";
                 }
+
+                InputTextBox.Text = inputText;
+                CompressedTextBox.Text = encodedText;
             }
         }
         
         private void SelectSaveDirectoryButton_Click(object sender, RoutedEventArgs e)
         {
-            OpenFileDialog dialog = new OpenFileDialog();
+            var dialog = new OpenFileDialog();
             dialog.InitialDirectory = saveDirectory;
             dialog.Title = "Выберите директорию для сохранения";
-
             dialog.ValidateNames = false;
             dialog.CheckFileExists = false;
             dialog.CheckPathExists = true;
-
-            dialog.FileName = "Folder Selection.";
+            dialog.FileName = "Выберите папку";
             if (dialog.ShowDialog() == true)
             {
                 saveDirectory = Path.GetDirectoryName(dialog.FileName);
@@ -84,37 +111,36 @@ namespace CourseProject.Lab4
         {
             if (string.IsNullOrEmpty(saveDirectory))
             {
-                MessageBox.Show("Пожалуйста, выберите директорию для сохранения файла.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Пожалуйста, выберите директорию для сохранения файла.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             
             var baseFileName = "DecodedFile.txt";
-            
-            File.WriteAllText(Path.Combine(saveDirectory, baseFileName), inputText, Encoding.UTF8);
-            MessageBox.Show("Текстовый файл успешно сохранен по пути: " + Path.Combine(saveDirectory, baseFileName),
-                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            var filePath = Path.Combine(saveDirectory, baseFileName);
+            File.WriteAllText(filePath, inputText, Encoding.UTF8);
+            MessageBox.Show("Текстовый файл успешно сохранен по пути: " + filePath, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            InputFileSizeTextBox.Text = (CalculateFileSize(filePath) / 1024).ToString("F2") + " KB";
         }
         
         private void SaveBinaryFileButton_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(saveDirectory))
             {
-                MessageBox.Show("Пожалуйста, выберите директорию для сохранения файла.",
-                    "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Пожалуйста, выберите директорию для сохранения файла.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             
             var baseFileName = "CompressedFile.bin";
-            
-            File.WriteAllBytes(Path.Combine(saveDirectory, baseFileName), Encoding.UTF8.GetBytes(encodedText));
-            MessageBox.Show("Бинарный файл успешно сохранен по пути: " + Path.Combine(saveDirectory, baseFileName),
-                    "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            var filePath = Path.Combine(saveDirectory, baseFileName);
+            File.WriteAllBytes(filePath, BitPacker.PackBits(encodedText));
+            MessageBox.Show("Бинарный файл успешно сохранен по пути: " + filePath, "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            CompressedFileSizeTextBox.Text = (CalculateFileSize(filePath) / 1024).ToString("F2") + " KB";
         }
         
-        public double CalculateFileSize(string file, bool isCompressed = false)
+        public double CalculateFileSize(string filePath)
         {
-            return isCompressed ? file.Length : file.Length * 8;
+            var fileInfo = new FileInfo(filePath);
+            return fileInfo.Length;
         }
         
         public void ExportHuffmanTableToJson(string filePath)
