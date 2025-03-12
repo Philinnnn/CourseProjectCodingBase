@@ -26,20 +26,20 @@ namespace CourseProject.Lab4
             if (saveDirectory != null)
             {
                 var huffmanTablePath = Path.Combine(saveDirectory, "HuffmanTable.json");
-                openFileDialog.Filter = "Text files (*.txt)|*.txt|Binary files (*.bin)|*.bin|All files (*.*)|*.*";
+                openFileDialog.Filter = "Text files (*.txt)|*.txt|Binary files (*.bin)|*.bin";
                 if (openFileDialog.ShowDialog() == true)
                 {
                     var extension = Path.GetExtension(openFileDialog.FileName).ToLower();
                     if (extension == ".bin")
                     {
-                        byte[] fileBytes = File.ReadAllBytes(openFileDialog.FileName);
-                        string binaryContent = Encoding.UTF8.GetString(fileBytes); 
-                        if (File.Exists(huffmanTablePath)) 
-                        { 
+                        var fileBytes = File.ReadAllBytes(openFileDialog.FileName);
+                        var binaryContent = Encoding.UTF8.GetString(fileBytes);
+                        if (File.Exists(huffmanTablePath))
+                        {
                             var serializer = new DataContractJsonSerializer(typeof(Dictionary<char, string>)); 
-                            using (var stream = new FileStream(huffmanTablePath, FileMode.Open)) 
-                            { 
-                                huffmanTable = serializer.ReadObject(stream) as Dictionary<char, string>; 
+                            using (var stream = new FileStream(huffmanTablePath, FileMode.Open))
+                            {
+                                huffmanTable = serializer.ReadObject(stream) as Dictionary<char, string>;
                             }
                         }
                         huffmanCoder.HuffmanTable = huffmanTable;
@@ -89,7 +89,7 @@ namespace CourseProject.Lab4
                 return;
             }
             
-            string baseFileName = "DecodedFile.txt";
+            var baseFileName = "DecodedFile.txt";
             
             File.WriteAllText(Path.Combine(saveDirectory, baseFileName), inputText, Encoding.UTF8);
             MessageBox.Show("Текстовый файл успешно сохранен по пути: " + Path.Combine(saveDirectory, baseFileName),
@@ -105,7 +105,7 @@ namespace CourseProject.Lab4
                 return;
             }
             
-            string baseFileName = "CompressedFile.bin";
+            var baseFileName = "CompressedFile.bin";
             
             File.WriteAllBytes(Path.Combine(saveDirectory, baseFileName), Encoding.UTF8.GetBytes(encodedText));
             MessageBox.Show("Бинарный файл успешно сохранен по пути: " + Path.Combine(saveDirectory, baseFileName),
@@ -114,7 +114,7 @@ namespace CourseProject.Lab4
         
         public double CalculateFileSize(string file, bool isCompressed = false)
         {
-            return isCompressed ? file.Length : file.Length * 16;
+            return isCompressed ? file.Length : file.Length * 8;
         }
         
         public void ExportHuffmanTableToJson(string filePath)
