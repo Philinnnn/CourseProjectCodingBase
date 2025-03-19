@@ -15,7 +15,6 @@ namespace CourseProject.Lab4
         private string? saveDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Lab4");
         
         private HuffmanCoding huffmanCoder = new();
-        private Dictionary<char, string>? huffmanTable;
         
         public Lab4Window()
         {
@@ -26,7 +25,6 @@ namespace CourseProject.Lab4
         {
             inputText = "";
             encodedText = "";
-            huffmanTable = null;
             huffmanCoder.HuffmanTable = null;
             InputTextBox.Text = "Содержимое файла";
             CompressedTextBox.Text = "Сжатое содержимое";
@@ -43,7 +41,7 @@ namespace CourseProject.Lab4
         {
             ClearData();
             
-            OpenFileDialog openFileDialog = new OpenFileDialog();
+            var openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Text files (*.txt)|*.txt|Binary files (*.bin)|*.bin";
             if (openFileDialog.ShowDialog() == true)
             {
@@ -62,7 +60,7 @@ namespace CourseProject.Lab4
                             var serializer = new DataContractJsonSerializer(typeof(Dictionary<char, string>)); 
                             using (var stream = new FileStream(huffmanTablePath, FileMode.Open))
                             {
-                                huffmanTable = serializer.ReadObject(stream) as Dictionary<char, string>;
+                                huffmanCoder.HuffmanTable = serializer.ReadObject(stream) as Dictionary<char, string>;
                             }
                         }
                         else
@@ -70,7 +68,6 @@ namespace CourseProject.Lab4
                             MessageBox.Show("Файл таблицы HuffmanTable.json не найден в " + fileDirectory, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                             return;
                         }
-                        huffmanCoder.HuffmanTable = huffmanTable;
                         var decodedText = huffmanCoder.Decode(binaryContent);
                         inputText = decodedText;
                         encodedText = binaryContent;
@@ -80,7 +77,7 @@ namespace CourseProject.Lab4
                     {
                         inputText = File.ReadAllText(openFileDialog.FileName);
                         encodedText = huffmanCoder.Encode(inputText);
-                        huffmanTable = huffmanCoder.HuffmanTable;
+                        
                         var huffmanTablePathText = Path.Combine(Path.GetDirectoryName(openFileDialog.FileName) ?? string.Empty, "HuffmanTable.json");
                         ExportHuffmanTableToJson(huffmanTablePathText);
                         InputFileSizeTextBox.Text = (CalculateFileSize(openFileDialog.FileName) / 1024).ToString("F2") + " KB";
@@ -145,7 +142,7 @@ namespace CourseProject.Lab4
         
         public void ExportHuffmanTableToJson(string filePath)
         {
-            if (huffmanTable == null)
+            if (huffmanCoder.HuffmanTable == null)
             {
                 MessageBox.Show("Таблица Хаффмана пуста. Сначала выполните кодирование.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -154,7 +151,7 @@ namespace CourseProject.Lab4
             using (var stream = new FileStream(filePath, FileMode.Create))
             using (var writer = JsonReaderWriterFactory.CreateJsonWriter(stream, Encoding.UTF8, true, true, "  "))
             {
-                serializer.WriteObject(writer, huffmanTable);
+                serializer.WriteObject(writer, huffmanCoder.HuffmanTable);
                 writer.WriteWhitespace("\n");
             }
         }

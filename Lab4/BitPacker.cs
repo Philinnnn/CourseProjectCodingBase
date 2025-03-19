@@ -8,7 +8,7 @@ public class BitPacker
     {
         var numOfBytes = (bitString.Length + 7) / 8;
         var bytes = new byte[numOfBytes];
-        for (int i = 0; i < numOfBytes; i++)
+        for (var i = 0; i < numOfBytes; i++)
         {
             var remaining = bitString.Length - i * 8;
             var byteString = remaining >= 8 
