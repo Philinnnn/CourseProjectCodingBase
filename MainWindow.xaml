@@ -8,6 +8,7 @@
             <ListBoxItem Content="Лабораторная №2" Tag="2" HorizontalAlignment="Center"/>
             <ListBoxItem Content="Лабораторная №3" Tag="3" HorizontalAlignment="Center"/>
             <ListBoxItem Content="Лабораторная №4" Tag="4" HorizontalAlignment="Center"/>
+            <ListBoxItem Content="Лабораторная №5" Tag="5" HorizontalAlignment="Center"/>
         </ListBox>
         <Button Content="Открыть" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 Margin="0,0,0,10" Click="OpenLab"/>
