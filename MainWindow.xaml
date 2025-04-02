@@ -5,6 +5,7 @@
     <Grid Height="500" VerticalAlignment="Top">
         <ListBox Name="LabList" HorizontalAlignment="Center" Height="475" Width="250"
                  Margin="0,20,0,0">
+            <ListBoxItem Content="Лабораторная №1" Tag="1" HorizontalAlignment="Center"/>
             <ListBoxItem Content="Лабораторная №2" Tag="2" HorizontalAlignment="Center"/>
             <ListBoxItem Content="Лабораторная №3" Tag="3" HorizontalAlignment="Center"/>
             <ListBoxItem Content="Лабораторная №4" Tag="4" HorizontalAlignment="Center"/>
