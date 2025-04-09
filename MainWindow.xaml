@@ -4,14 +4,13 @@
         Title="Основы кодирования"
         Height="720" Width="1080"
         WindowStartupLocation="CenterScreen"
-        Background="#FF1E1E2F">
+        Background="{StaticResource DarkBackgroundBrush}">
 
     <DockPanel Margin="20">
         <!-- Нижняя панель с авторством -->
         <TextBlock DockPanel.Dock="Bottom"
                    Text="Курсовой проект Батырханова Армана — группа СИБ-22-5"
-                   FontSize="16"
-                   Foreground="LightGray"
+                   Style="{StaticResource CaptionTextStyle}"
                    HorizontalAlignment="Right"
                    Margin="0,10,0,0"/>
 

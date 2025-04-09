@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -62,66 +62,82 @@ namespace CourseProject.Lab5
         }
 
         private async void CompressButton_Click(object sender, RoutedEventArgs e)
+{
+    if (originalBitmap == null)
+    {
+        MessageBox.Show("Сначала загрузите изображение!",
+            "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+        return;
+    }
+
+    try
+    {
+        // Подготовка данных в UI-потоке
+        int width = originalBitmap.PixelWidth;
+        int height = originalBitmap.PixelHeight;
+        int stride = width * 4;
+        byte[] pixels = new byte[height * stride];
+
+        WriteableBitmap tempBitmap = new WriteableBitmap(originalBitmap);
+        tempBitmap.CopyPixels(pixels, stride, 0);
+
+        // Считываем значение слайдера в локальную переменную (например, качество)
+        int quality = 100 - (int)CompressionSlider.Value;
+        if (quality >= 100)
         {
-            if (originalBitmap == null)
-            {
-                MessageBox.Show("Сначала загрузите изображение!",
-                    "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            try
-            {
-                // Подготовка данных в UI-потоке
-                int width = originalBitmap.PixelWidth;
-                int height = originalBitmap.PixelHeight;
-                int stride = width * 4;
-                byte[] pixels = new byte[height * stride];
-
-                WriteableBitmap tempBitmap = new WriteableBitmap(originalBitmap);
-                tempBitmap.CopyPixels(pixels, stride, 0);
-
-                // Подготовка UI
-                ProgressBar.Visibility = Visibility.Visible;
-                CompressButton.IsEnabled = false;
-                RestoreButton.IsEnabled = false;
-                SaveImageButton.IsEnabled = false;
-
-                // Асинхронное выполнение сжатия в фоновом потоке
-                (byte[] compressedPixels, byte[] restoredPixels, int resultWidth, int resultHeight, int resultStride) = await Task.Run(() =>
-                {
-                    return JpegCompressor.Compress(pixels, width, height);
-                });
-
-                // Обновление UI в UI-потоке
-                Dispatcher.Invoke(() =>
-                {
-                    compressedBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
-                    compressedBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), compressedPixels, resultStride, 0);
-
-                    restoredBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
-                    restoredBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), restoredPixels, resultStride, 0);
-
-                    CompressedImage.Source = restoredBitmap;
-                    ProgressBar.Visibility = Visibility.Collapsed;
-                    CompressButton.IsEnabled = true;
-                    RestoreButton.IsEnabled = true;
-                    SaveImageButton.IsEnabled = true;
-                });
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Invoke(() =>
-                {
-                    MessageBox.Show($"Ошибка при сжатии: {ex.Message}",
-                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-                    ProgressBar.Visibility = Visibility.Collapsed;
-                    CompressButton.IsEnabled = true;
-                    RestoreButton.IsEnabled = true;
-                    SaveImageButton.IsEnabled = true;
-                });
-            }
+            quality = 99;
         }
+        else if(quality <= 0)
+        {
+            quality = 1;
+        }
+
+        // Подготовка UI
+        ProgressBar.Visibility = Visibility.Visible;
+        CompressButton.IsEnabled = false;
+        RestoreButton.IsEnabled = false;
+        SaveImageButton.IsEnabled = false;
+
+        // Асинхронное выполнение сжатия в фоновом потоке
+        (byte[] compressedPixels, byte[] restoredPixels, int resultWidth, int resultHeight, int resultStride) =
+            await Task.Run(() =>
+            {
+                // Передаем качество в метод сжатия
+                return JpegCompressor.Compress(pixels, width, height, use420: true, quality: quality);
+            });
+
+        // Обновление UI в UI-потоке
+        Dispatcher.Invoke(() =>
+        {
+            compressedBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
+            compressedBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), compressedPixels, resultStride, 0);
+            compressedBitmap.Freeze();
+
+            restoredBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
+            restoredBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), restoredPixels, resultStride, 0);
+            restoredBitmap.Freeze();
+
+            CompressedImage.Source = restoredBitmap;
+            ProgressBar.Visibility = Visibility.Collapsed;
+            CompressButton.IsEnabled = true;
+            RestoreButton.IsEnabled = true;
+            SaveImageButton.IsEnabled = true;
+        });
+    }
+    catch (Exception ex)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            MessageBox.Show($"Ошибка при сжатии: {ex.Message}",
+                "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            ProgressBar.Visibility = Visibility.Collapsed;
+            CompressButton.IsEnabled = true;
+            RestoreButton.IsEnabled = true;
+            SaveImageButton.IsEnabled = true;
+        });
+    }
+}
+
 
         private async void RestoreButton_Click(object sender, RoutedEventArgs e)
         {
