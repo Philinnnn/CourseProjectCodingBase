@@ -12,20 +12,9 @@ namespace CourseProject
 
         private void OpenLab(object sender, RoutedEventArgs e)
         {
-            if (LabList.SelectedItem is ListBoxItem selectedItem)
+            if (sender is Button button && int.TryParse(button.Tag?.ToString(), out int labNumber))
             {
-                if (int.TryParse(selectedItem.Tag?.ToString(), out int labNumber))
-                {
-                    LabSelector.OpenLab(labNumber);
-                }
-                else
-                {
-                    MessageBox.Show("Неверный идентификатор лабораторной работы.");
-                }
-            }
-            else
-            {
-                MessageBox.Show("Пожалуйста, выберите лабораторную работу.");
+                LabSelector.OpenLab(labNumber);
             }
         }
     }

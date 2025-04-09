@@ -1,17 +1,28 @@
 ﻿<Window x:Class="CourseProject.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Курсовой проект Батырханова Армана" Height="550" Width="500">
-    <Grid Height="500" VerticalAlignment="Top">
-        <ListBox Name="LabList" HorizontalAlignment="Center" Height="475" Width="250"
-                 Margin="0,20,0,0">
-            <ListBoxItem Content="Лабораторная №1" Tag="1" HorizontalAlignment="Center"/>
-            <ListBoxItem Content="Лабораторная №2" Tag="2" HorizontalAlignment="Center"/>
-            <ListBoxItem Content="Лабораторная №3" Tag="3" HorizontalAlignment="Center"/>
-            <ListBoxItem Content="Лабораторная №4" Tag="4" HorizontalAlignment="Center"/>
-            <ListBoxItem Content="Лабораторная №5" Tag="5" HorizontalAlignment="Center"/>
-        </ListBox>
-        <Button Content="Открыть" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                Margin="0,0,0,10" Click="OpenLab"/>
-    </Grid>
+        Title="Основы кодирования"
+        Height="720" Width="1080"
+        WindowStartupLocation="CenterScreen"
+        Background="#FF1E1E2F">
+
+    <DockPanel Margin="20">
+        <!-- Нижняя панель с авторством -->
+        <TextBlock DockPanel.Dock="Bottom"
+                   Text="Курсовой проект Батырханова Армана — группа СИБ-22-5"
+                   FontSize="16"
+                   Foreground="LightGray"
+                   HorizontalAlignment="Right"
+                   Margin="0,10,0,0"/>
+
+        <!-- Центральная сетка с кнопками -->
+        <UniformGrid Rows="2" Columns="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Button Content="Анализ энтропии" Tag="1" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
+            <Button Content="Алгоритмы кодирования" Tag="2" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
+            <Button Content="Шумовой канал и фильтрация" Tag="3" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
+            <Button Content="Сжатие и архивация текста" Tag="4" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
+            <Button Content="Сжатие изображений" Tag="5" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
+            <Button Content="Лабораторная 6" Tag="6" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
+        </UniformGrid>
+    </DockPanel>
 </Window>
