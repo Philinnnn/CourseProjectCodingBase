@@ -1,157 +1,269 @@
 ﻿using System;
-using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
-using BitMiracle.LibJpeg;
 
 namespace CourseProject.Lab5
 {
     public partial class Lab5Window : Window
     {
         private BitmapImage originalBitmap;
-        private BitmapImage compressedBitmap;
-        private byte[] compressedJpegBytes;
+        private WriteableBitmap compressedBitmap;
+        private WriteableBitmap restoredBitmap;
 
         public Lab5Window()
         {
             InitializeComponent();
+            CompressionSlider.ValueChanged += CompressionSlider_ValueChanged;
         }
 
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
         {
-            var openFileDialog = new OpenFileDialog();
-            openFileDialog.Filter = "Image files (*.bmp;*.png)|*.bmp;*.png";
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "Image files (*.png;*.bmp;*.jpg)|*.png;*.bmp;*.jpg|All files (*.*)|*.*"
+            };
+
             if (openFileDialog.ShowDialog() == true)
             {
-                originalBitmap = new BitmapImage(new Uri(openFileDialog.FileName));
-                OriginalImage.Source = originalBitmap;
+                try
+                {
+                    originalBitmap = new BitmapImage(new Uri(openFileDialog.FileName));
+                    OriginalImage.Source = originalBitmap;
+                    CompressedImage.Source = null;
+
+                    string extension = System.IO.Path.GetExtension(openFileDialog.FileName).ToLower();
+                    if (extension == ".jpg" || extension == ".jpeg")
+                    {
+                        CompressButton.Visibility = Visibility.Collapsed;
+                        RestoreButton.Visibility = Visibility.Visible;
+                        SliderLabel.Visibility = Visibility.Collapsed;
+                        CompressionSlider.Visibility = Visibility.Collapsed;
+                        CompressionTextBox.Visibility = Visibility.Collapsed;
+                    }
+                    else // .png или .bmp
+                    {
+                        CompressButton.Visibility = Visibility.Visible;
+                        RestoreButton.Visibility = Visibility.Collapsed;
+                        SliderLabel.Visibility = Visibility.Visible;
+                        CompressionSlider.Visibility = Visibility.Visible;
+                        CompressionTextBox.Visibility = Visibility.Visible;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при загрузке изображения: {ex.Message}",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
-        private void CompressButton_Click(object sender, RoutedEventArgs e)
+        private async void CompressButton_Click(object sender, RoutedEventArgs e)
         {
             if (originalBitmap == null)
             {
-                MessageBox.Show("Пожалуйста, загрузите изображение.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Сначала загрузите изображение!",
+                    "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
             try
             {
-                int sliderValue = (int)CompressionSlider.Value;
-                
-                int quality = 100 - sliderValue;
-                
-                compressedJpegBytes = CompressJpeg(originalBitmap, quality);
-                
-                MessageBox.Show($"Размер сжатого JPEG (степень сжатия {sliderValue}, качество {quality}): {compressedJpegBytes.Length / 1024.0 / 1024.0:F2} MB", "Информация");
-                
-                compressedBitmap = ByteArrayToBitmapImage(compressedJpegBytes);
-                CompressedImage.Source = compressedBitmap;
+                // Подготовка данных в UI-потоке
+                int width = originalBitmap.PixelWidth;
+                int height = originalBitmap.PixelHeight;
+                int stride = width * 4;
+                byte[] pixels = new byte[height * stride];
+
+                WriteableBitmap tempBitmap = new WriteableBitmap(originalBitmap);
+                tempBitmap.CopyPixels(pixels, stride, 0);
+
+                // Подготовка UI
+                ProgressBar.Visibility = Visibility.Visible;
+                CompressButton.IsEnabled = false;
+                RestoreButton.IsEnabled = false;
+                SaveImageButton.IsEnabled = false;
+
+                // Асинхронное выполнение сжатия в фоновом потоке
+                (byte[] compressedPixels, byte[] restoredPixels, int resultWidth, int resultHeight, int resultStride) = await Task.Run(() =>
+                {
+                    return JpegCompressor.Compress(pixels, width, height);
+                });
+
+                // Обновление UI в UI-потоке
+                Dispatcher.Invoke(() =>
+                {
+                    compressedBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
+                    compressedBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), compressedPixels, resultStride, 0);
+
+                    restoredBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
+                    restoredBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), restoredPixels, resultStride, 0);
+
+                    CompressedImage.Source = restoredBitmap;
+                    ProgressBar.Visibility = Visibility.Collapsed;
+                    CompressButton.IsEnabled = true;
+                    RestoreButton.IsEnabled = true;
+                    SaveImageButton.IsEnabled = true;
+                });
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Ошибка при сжатии изображения: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show($"Ошибка при сжатии: {ex.Message}",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ProgressBar.Visibility = Visibility.Collapsed;
+                    CompressButton.IsEnabled = true;
+                    RestoreButton.IsEnabled = true;
+                    SaveImageButton.IsEnabled = true;
+                });
+            }
+        }
+
+        private async void RestoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (originalBitmap == null)
+            {
+                MessageBox.Show("Сначала загрузите изображение!",
+                    "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            try
+            {
+                ProgressBar.Visibility = Visibility.Visible;
+                CompressButton.IsEnabled = false;
+                RestoreButton.IsEnabled = false;
+                SaveImageButton.IsEnabled = false;
+
+                if (CompressedImage.Source == null) // Если это JPG и еще не восстановлено
+                {
+                    int width = originalBitmap.PixelWidth;
+                    int height = originalBitmap.PixelHeight;
+                    int stride = width * 4;
+                    byte[] pixels = new byte[height * stride];
+
+                    WriteableBitmap tempBitmap = new WriteableBitmap(originalBitmap);
+                    tempBitmap.CopyPixels(pixels, stride, 0);
+
+                    (byte[] compressedPixels, byte[] restoredPixels, int resultWidth, int resultHeight, int resultStride) = await Task.Run(() =>
+                    {
+                        return JpegCompressor.Compress(pixels, width, height);
+                    });
+
+                    Dispatcher.Invoke(() =>
+                    {
+                        compressedBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
+                        compressedBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), compressedPixels, resultStride, 0);
+
+                        restoredBitmap = new WriteableBitmap(resultWidth, resultHeight, 96, 96, PixelFormats.Bgra32, null);
+                        restoredBitmap.WritePixels(new Int32Rect(0, 0, resultWidth, resultHeight), restoredPixels, resultStride, 0);
+
+                        CompressedImage.Source = restoredBitmap;
+                        ProgressBar.Visibility = Visibility.Collapsed;
+                        CompressButton.IsEnabled = true;
+                        RestoreButton.IsEnabled = true;
+                        SaveImageButton.IsEnabled = true;
+                    });
+                }
+                else // Сброс результата сжатия
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        OriginalImage.Source = originalBitmap;
+                        CompressedImage.Source = null;
+                        CompressButton.Visibility = Visibility.Visible;
+                        RestoreButton.Visibility = Visibility.Collapsed;
+                        ProgressBar.Visibility = Visibility.Collapsed;
+                        CompressButton.IsEnabled = true;
+                        RestoreButton.IsEnabled = true;
+                        SaveImageButton.IsEnabled = true;
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    MessageBox.Show($"Ошибка при восстановлении: {ex.Message}",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ProgressBar.Visibility = Visibility.Collapsed;
+                    CompressButton.IsEnabled = true;
+                    RestoreButton.IsEnabled = true;
+                    SaveImageButton.IsEnabled = true;
+                });
             }
         }
 
         private void SaveImageButton_Click(object sender, RoutedEventArgs e)
         {
-            if (compressedBitmap == null || compressedJpegBytes == null)
+            if (CompressedImage.Source == null || compressedBitmap == null || restoredBitmap == null)
             {
-                MessageBox.Show("Пожалуйста, выполните сжатие изображения.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Сначала выполните сжатие или восстановление изображения!",
+                    "Предупреждение", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            var saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "JPEG files (*.jpg)|*.jpg|PNG files (*.png)|*.png|BMP files (*.bmp)|*.bmp";
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Filter = "JPEG Image (*.jpg)|*.jpg|PNG Image (*.png)|*.png"
+            };
+
+            string extension = System.IO.Path.GetExtension(OriginalImage.Source.ToString()).ToLower();
+            if (extension == ".jpg" || extension == ".jpeg")
+            {
+                saveFileDialog.FileName = "RestoredImg.png";
+                saveFileDialog.DefaultExt = "png";
+            }
+            else
+            {
+                saveFileDialog.FileName = "CompressedImg.jpg";
+                saveFileDialog.DefaultExt = "jpg";
+            }
+
             if (saveFileDialog.ShowDialog() == true)
             {
-                string extension = Path.GetExtension(saveFileDialog.FileName).ToLower();
-                using (var fileStream = new FileStream(saveFileDialog.FileName, FileMode.Create))
+                try
                 {
+                    extension = System.IO.Path.GetExtension(saveFileDialog.FileName).ToLower();
+                    BitmapEncoder encoder;
+                    BitmapSource source;
+
                     if (extension == ".jpg")
                     {
-                        fileStream.Write(compressedJpegBytes, 0, compressedJpegBytes.Length);
+                        encoder = new JpegBitmapEncoder { QualityLevel = (int)CompressionSlider.Value };
+                        source = compressedBitmap;
                     }
-                    else
+                    else // .png
                     {
-                        BitmapEncoder encoder;
-                        if (extension == ".png")
-                        {
-                            encoder = new PngBitmapEncoder();
-                        }
-                        else
-                        {
-                            encoder = new BmpBitmapEncoder();
-                        }
-                        encoder.Frames.Add(BitmapFrame.Create(compressedBitmap));
-                        encoder.Save(fileStream);
+                        encoder = new PngBitmapEncoder();
+                        source = restoredBitmap;
                     }
-                }
-            }
-        }
-        
-        private byte[] CompressJpeg(BitmapImage bitmapImage, int quality)
-        {
-            FormatConvertedBitmap convertedBitmap = new FormatConvertedBitmap();
-            convertedBitmap.BeginInit();
-            convertedBitmap.Source = bitmapImage;
-            convertedBitmap.DestinationFormat = PixelFormats.Bgra32;
-            convertedBitmap.EndInit();
 
-            int width = convertedBitmap.PixelWidth;
-            int height = convertedBitmap.PixelHeight;
-            int stride = width * 4;
-            byte[] pixelData = new byte[height * stride];
-            
-            convertedBitmap.CopyPixels(pixelData, stride, 0);
-            
-            SampleRow[] rows = new SampleRow[height];
-            for (int y = 0; y < height; y++)
-            {
-                byte[] rowData = new byte[width * 3];
-                for (int x = 0; x < width; x++)
-                {
-                    int srcIndex = y * stride + x * 4;
-                    int dstIndex = x * 3;
-                    rowData[dstIndex] = pixelData[srcIndex + 2];     // R
-                    rowData[dstIndex + 1] = pixelData[srcIndex + 1]; // G
-                    rowData[dstIndex + 2] = pixelData[srcIndex];     // B
-                    // Игнорирование Alpha-канала (pixelData[srcIndex + 3])
+                    encoder.Frames.Add(BitmapFrame.Create(source));
+                    using (var stream = saveFileDialog.OpenFile())
+                    {
+                        encoder.Save(stream);
+                    }
+                    MessageBox.Show("Изображение успешно сохранено!",
+                        "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
-                rows[y] = new SampleRow(rowData, width, (byte)8, (byte)3);
-                // row, sampleCount, bitsPerComponent, componentsPerSample
-            }
-            
-            JpegImage jpegImage = new JpegImage(rows, Colorspace.RGB);
-            
-            CompressionParameters parameters = new CompressionParameters
-            {
-                Quality = quality,
-                SimpleProgressive = false
-            };
-            
-            using (MemoryStream outputStream = new MemoryStream())
-            {
-                jpegImage.WriteJpeg(outputStream, parameters);
-                return outputStream.ToArray();
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при сохранении: {ex.Message}",
+                        "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
-        
-        private BitmapImage ByteArrayToBitmapImage(byte[] byteArray)
+
+        private void CompressionSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
-            using (MemoryStream memory = new MemoryStream(byteArray))
+            if (CompressionTextBox != null)
             {
-                BitmapImage bitmapImage = new BitmapImage();
-                bitmapImage.BeginInit();
-                bitmapImage.StreamSource = memory;
-                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                bitmapImage.EndInit();
-                bitmapImage.Freeze();
-                return bitmapImage;
+                CompressionTextBox.Text = CompressionSlider.Value.ToString("F0");
             }
         }
     }
