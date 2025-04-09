@@ -76,8 +76,33 @@
         </Setter>
     </Style>
     
+    <!-- Стиль для компактных кнопок (фиолетовые) -->
+    <Style x:Key="CompactButtonStyle" TargetType="Button">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Background" Value="{StaticResource PurpleBrush}"/>
+        <Setter Property="Margin" Value="10"/>
+        <Setter Property="Padding" Value="10,5"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Width" Value="180"/>
+        <Setter Property="Height" Value="45"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="8"
+                            Effect="{StaticResource DropShadow}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
     <!-- Стиль для текстовых полей -->
-    <Style x:Key="StyledTextBox" TargetType="TextBox">
+    <Style x:Key="CompactTextBoxStyle" TargetType="TextBox">
         <Setter Property="Margin" Value="10"/>
         <Setter Property="Padding" Value="5"/>
         <Setter Property="FontSize" Value="14"/>
@@ -87,6 +112,21 @@
         <Setter Property="BorderThickness" Value="1"/>
     </Style>
     
+    <!-- Стиль для текстовых полей (широкие) -->
+    <Style x:Key="StyledTextBox" TargetType="TextBox">
+        <Setter Property="Margin" Value="10"/>
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="Height" Value="70"/>
+        <Setter Property="Width" Value="350"/>
+        <Setter Property="Foreground" Value="Black"/>
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="{StaticResource PurpleBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+
     <!-- Стиль для заголовков -->
     <Style x:Key="HeaderTextStyle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="20"/>
