@@ -1,8 +1,4 @@
-﻿using System;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-
-namespace CourseProject.Lab5
+﻿namespace CourseProject.Lab5
 {
     public static class JpegCompressor
     {

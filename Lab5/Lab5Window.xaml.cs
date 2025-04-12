@@ -10,7 +10,7 @@ using System.Windows.Media.Imaging;
 
 namespace CourseProject.Lab5
 {
-    public partial class Lab5Window : Window
+    public partial class Lab5Window
     {
         private Bitmap? _originalBitmap;
         private Bitmap? _compressedBitmap;
@@ -22,30 +22,17 @@ namespace CourseProject.Lab5
         }
 
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
-        { 
-            var openFileDialog = new OpenFileDialog { Filter = "Image files (*.bmp;*.png;*.jpg)|*.bmp;*.png;*.jpg" };
+        {
+            var openFileDialog = new OpenFileDialog { Filter = "Image files (*.bmp;*.png)|*.bmp;*.png" };
             if (openFileDialog.ShowDialog() == true)
             {
                 OriginalImage.Source = null;
                 CompressedImage.Source = null;
-                var fileExtension = Path.GetExtension(openFileDialog.FileName).ToLower();
-                if (fileExtension is ".jpg" or ".jpeg")
-                {
-                    // Загружаем и восстанавливаем JPEG
-                    _jpegMemoryStream = new MemoryStream(File.ReadAllBytes(openFileDialog.FileName));
-                    _compressedBitmap = new Bitmap(_jpegMemoryStream);
-                    CompressedImage.Source = BitmapToImageSource(_compressedBitmap);
-                    MessageBox.Show("JPEG изображение восстановлено из закодированного состояния.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                else
-                {
-                    // Загружаем обычное изображение
-                    _originalBitmap = new Bitmap(openFileDialog.FileName);
-                    OriginalImage.Source = BitmapToImageSource(_originalBitmap);
-                    _compressedBitmap = null;
-                    CompressedImage.Source = null;
-                    _jpegMemoryStream = null;
-                }
+                
+                _originalBitmap = new Bitmap(openFileDialog.FileName);
+                OriginalImage.Source = BitmapToImageSource(_originalBitmap);
+                _compressedBitmap = null;
+                _jpegMemoryStream = null;
             }
         }
 
@@ -58,7 +45,7 @@ namespace CourseProject.Lab5
             }
 
             ProgressBar.Visibility = Visibility.Visible;
-            int quality = (int)CompressionSlider.Value;
+            var quality = 100 - (int) CompressionSlider.Value;
 
             _jpegMemoryStream = new MemoryStream();
             var encoder = GetEncoder(ImageFormat.Jpeg);
@@ -83,13 +70,13 @@ namespace CourseProject.Lab5
             var saveFileDialog = new SaveFileDialog
             {
                 Filter = "JPEG Image|*.jpg",
-                FileName = "Compressed_image.jpg",
+                FileName = "Compressed_image.jpg"
             };
 
             if (saveFileDialog.ShowDialog() == true)
             {
                 File.WriteAllBytes(saveFileDialog.FileName, _jpegMemoryStream.ToArray());
-                MessageBox.Show("Изображение сохранено.");
+                MessageBox.Show($"Изображение сохранено по пути: {saveFileDialog.FileName}");
             }
         }
 
