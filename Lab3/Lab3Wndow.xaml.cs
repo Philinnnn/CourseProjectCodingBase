@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows.Media.Animation;
 
 namespace CourseProject.Lab3
 {
@@ -44,17 +45,17 @@ namespace CourseProject.Lab3
                 return;
             }
 
-            await DrawGraphsSynchronously();
-        }
+            // Очищаем графики перед отрисовкой
+            OriginalCanvas.Children.Clear();
+            ProcessedCanvas.Children.Clear();
+            FilteredCanvas.Children.Clear();
 
-        private async Task DrawGraphsSynchronously()
-        {
-            if (processor == null) return;
-
-            // Отрисовываем графики последовательно
-            await DrawGraphAsync(OriginalCanvas, processor.OriginalSignal);
-            await DrawGraphAsync(ProcessedCanvas, processor.ProcessedSignal);
-            await DrawGraphAsync(FilteredCanvas, processor.FilteredSignal);
+            // Запускаем анимацию синхронно на всех графиках
+            await Task.WhenAll(
+                DrawGraphAsync(OriginalCanvas, processor.OriginalSignal),
+                DrawGraphAsync(ProcessedCanvas, processor.ProcessedSignal),
+                DrawGraphAsync(FilteredCanvas, processor.FilteredSignal)
+            );
         }
 
         private async Task DrawGraphAsync(Canvas canvas, double[] data)
@@ -81,20 +82,55 @@ namespace CourseProject.Lab3
 
             canvas.Children.Add(polyline);
 
+            int totalPoints = data.Length;
             int batchSize = 50; // Количество точек в одной итерации
-            for (int i = 0; i < data.Length; i++)
-            {
-                if (!double.IsNaN(data[i]))
-                {
-                    double x = i * (width / (data.Length - 1));
-                    double y = height - ((data[i] - min) / (max - min)) * height;
-                    polyline.Points.Add(new Point(x, y));
-                }
+            Duration animationDuration = new Duration(TimeSpan.FromSeconds(2)); // Длительность анимации
 
-                // Обновляем UI каждые batchSize точек
-                if (i % batchSize == 0)
-                    await Task.Yield();
-            }
+            DoubleAnimation progressAnimation = new DoubleAnimation(0, totalPoints, animationDuration)
+            {
+                EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseInOut }
+            };
+
+            Storyboard storyboard = new Storyboard();
+            storyboard.Children.Add(progressAnimation);
+            Storyboard.SetTarget(progressAnimation, polyline);
+            Storyboard.SetTargetProperty(progressAnimation, new PropertyPath("(Polyline.Tag)"));
+
+            polyline.Tag = 0.0; // Используем double для хранения текущего прогресса
+
+            storyboard.CurrentTimeInvalidated += (s, e) =>
+            {
+                double currentPoint = (double)polyline.Tag; // Явное приведение к double
+                polyline.Points.Clear();
+
+                for (int i = 0; i < (int)currentPoint; i++) // Приведение currentPoint к int для итерации
+                {
+                    if (!double.IsNaN(data[i]))
+                    {
+                        double x = i * (width / (data.Length - 1));
+                        double y = height - ((data[i] - min) / (max - min)) * height;
+                        polyline.Points.Add(new Point(x, y));
+                    }
+                }
+            };
+
+            storyboard.Completed += (s, e) =>
+            {
+                // Убедимся, что все точки добавлены после завершения анимации
+                polyline.Points.Clear();
+                for (int i = 0; i < data.Length; i++)
+                {
+                    if (!double.IsNaN(data[i]))
+                    {
+                        double x = i * (width / (data.Length - 1));
+                        double y = height - ((data[i] - min) / (max - min)) * height;
+                        polyline.Points.Add(new Point(x, y));
+                    }
+                }
+            };
+
+            storyboard.Begin();
+            await Task.Delay(animationDuration.TimeSpan); // Ждем завершения анимации
         }
 
         private void ClearGraphs(object sender, RoutedEventArgs e)
@@ -107,4 +143,3 @@ namespace CourseProject.Lab3
         }
     }
 }
-
