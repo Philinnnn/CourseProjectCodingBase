@@ -16,6 +16,7 @@ namespace CourseProject
             {
                 LabSelector.OpenLab(labNumber);
             }
+            Close();
         }
     }
 }
