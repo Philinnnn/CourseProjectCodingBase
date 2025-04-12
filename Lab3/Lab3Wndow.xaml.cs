@@ -53,6 +53,8 @@ namespace CourseProject.Lab3
             OriginalCanvas.Children.Clear();
             ProcessedCanvas.Children.Clear();
             FilteredCanvas.Children.Clear();
+            InputTextBox.Text = "";
+            LossPercentageTextBox.Text = "";
         }
 
         private void DrawGraph(Canvas canvas, double[] data)
