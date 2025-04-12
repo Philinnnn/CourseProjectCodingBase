@@ -22,10 +22,12 @@ namespace CourseProject.Lab5
         }
 
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
-        {
+        { 
             var openFileDialog = new OpenFileDialog { Filter = "Image files (*.bmp;*.png;*.jpg)|*.bmp;*.png;*.jpg" };
             if (openFileDialog.ShowDialog() == true)
             {
+                OriginalImage.Source = null;
+                CompressedImage.Source = null;
                 var fileExtension = Path.GetExtension(openFileDialog.FileName).ToLower();
                 if (fileExtension is ".jpg" or ".jpeg")
                 {
