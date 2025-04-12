@@ -23,14 +23,20 @@
             <WrapPanel HorizontalAlignment="Center" Margin="0,10">
                 <Button Content="Загрузить файл" Click="LoadFileButton_Click" Style="{StaticResource GradientButtonStyle}" Margin="5"/>
                 <Button x:Name="CompressButton" Content="Сжать" Click="CompressButton_Click" Style="{StaticResource GradientButtonStyle}" Margin="5"/>
-                <Button x:Name="RestoreButton" Content="Восстановить" Click="RestoreButton_Click" Style="{StaticResource GradientButtonStyle}" Visibility="Collapsed" Margin="5"/>
                 <Button x:Name="SaveImageButton" Content="Сохранить изображение" Click="SaveImageButton_Click" Style="{StaticResource GradientButtonStyle}" Margin="5"/>
             </WrapPanel>
             
             <!-- Слайдер для настройки качества -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
                 <TextBlock x:Name="SliderLabel" Text="Качество:" Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center"/>
-                <Slider x:Name="CompressionSlider" Minimum="1" Maximum="100" Value="50" Width="200" Margin="10"/>
+                <Slider x:Name="CompressionSlider" 
+                        Minimum="1" 
+                        Maximum="100" 
+                        Value="50" 
+                        Width="200" 
+                        Margin="10" 
+                        IsSnapToTickEnabled="True" 
+                        TickFrequency="1"/>
                 <TextBox x:Name="CompressionTextBox" Style="{StaticResource CompactTextBoxStyle}" 
                          Text="{Binding ElementName=CompressionSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
             </StackPanel>

@@ -26,12 +26,24 @@ namespace CourseProject.Lab5
             var openFileDialog = new OpenFileDialog { Filter = "Image files (*.bmp;*.png;*.jpg)|*.bmp;*.png;*.jpg" };
             if (openFileDialog.ShowDialog() == true)
             {
-                _originalBitmap = new Bitmap(openFileDialog.FileName);
-                OriginalImage.Source = BitmapToImageSource(_originalBitmap);
-                _compressedBitmap = null;
-                CompressedImage.Source = null;
-                RestoreButton.Visibility = Visibility.Collapsed;
-                _jpegMemoryStream = null;
+                var fileExtension = Path.GetExtension(openFileDialog.FileName).ToLower();
+                if (fileExtension is ".jpg" or ".jpeg")
+                {
+                    // Загружаем и восстанавливаем JPEG
+                    _jpegMemoryStream = new MemoryStream(File.ReadAllBytes(openFileDialog.FileName));
+                    _compressedBitmap = new Bitmap(_jpegMemoryStream);
+                    CompressedImage.Source = BitmapToImageSource(_compressedBitmap);
+                    MessageBox.Show("JPEG изображение восстановлено из закодированного состояния.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    // Загружаем обычное изображение
+                    _originalBitmap = new Bitmap(openFileDialog.FileName);
+                    OriginalImage.Source = BitmapToImageSource(_originalBitmap);
+                    _compressedBitmap = null;
+                    CompressedImage.Source = null;
+                    _jpegMemoryStream = null;
+                }
             }
         }
 
@@ -56,15 +68,6 @@ namespace CourseProject.Lab5
             _compressedBitmap = new Bitmap(_jpegMemoryStream);
             CompressedImage.Source = BitmapToImageSource(_compressedBitmap);
             ProgressBar.Visibility = Visibility.Collapsed;
-            RestoreButton.Visibility = Visibility.Visible;
-        }
-
-        private void RestoreButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_compressedBitmap == null)
-                return;
-
-            CompressedImage.Source = BitmapToImageSource(_compressedBitmap);
         }
 
         private void SaveImageButton_Click(object sender, RoutedEventArgs e)
@@ -75,7 +78,12 @@ namespace CourseProject.Lab5
                 return;
             }
 
-            var saveFileDialog = new SaveFileDialog { Filter = "JPEG Image|*.jpg" };
+            var saveFileDialog = new SaveFileDialog
+            {
+                Filter = "JPEG Image|*.jpg",
+                FileName = "Compressed_image.jpg",
+            };
+
             if (saveFileDialog.ShowDialog() == true)
             {
                 File.WriteAllBytes(saveFileDialog.FileName, _jpegMemoryStream.ToArray());
