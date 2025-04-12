@@ -9,28 +9,36 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        
+
+        <!-- Заголовок -->
         <TextBlock Text="Лабораторная работа 5" 
-                   Style="{StaticResource HeaderTextStyle}"
-                   Foreground="{StaticResource LightGrayBrush}"/>
-        
-        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
-            <WrapPanel HorizontalAlignment="Center">
-                <Button Content="Загрузить файл" Click="LoadFileButton_Click" Style="{StaticResource GradientButtonStyle}"/>
-                <Button x:Name="CompressButton" Content="Сжать" Click="CompressButton_Click" Style="{StaticResource GradientButtonStyle}"/>
-                <Button x:Name="RestoreButton" Content="Восстановить" Click="RestoreButton_Click" Style="{StaticResource GradientButtonStyle}" Visibility="Collapsed"/>
-                <Button x:Name="SaveImageButton" Content="Сохранить изображение" Click="SaveImageButton_Click" Style="{StaticResource GradientButtonStyle}"/>
+                   Style="{StaticResource HeaderTextStyle}" 
+                   Foreground="{StaticResource LightGrayBrush}"
+                   HorizontalAlignment="Center" Margin="10"/>
+
+        <!-- Контейнер с кнопками и настройками -->
+        <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10">
+            
+            <!-- Кнопки -->
+            <WrapPanel HorizontalAlignment="Center" Margin="0,10">
+                <Button Content="Загрузить файл" Click="LoadFileButton_Click" Style="{StaticResource GradientButtonStyle}" Margin="5"/>
+                <Button x:Name="CompressButton" Content="Сжать" Click="CompressButton_Click" Style="{StaticResource GradientButtonStyle}" Margin="5"/>
+                <Button x:Name="RestoreButton" Content="Восстановить" Click="RestoreButton_Click" Style="{StaticResource GradientButtonStyle}" Visibility="Collapsed" Margin="5"/>
+                <Button x:Name="SaveImageButton" Content="Сохранить изображение" Click="SaveImageButton_Click" Style="{StaticResource GradientButtonStyle}" Margin="5"/>
             </WrapPanel>
             
+            <!-- Слайдер для настройки качества -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
-                <TextBlock x:Name="SliderLabel" Text="Степень сжатия:" Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center"/>
+                <TextBlock x:Name="SliderLabel" Text="Качество:" Style="{StaticResource CaptionTextStyle}" VerticalAlignment="Center"/>
                 <Slider x:Name="CompressionSlider" Minimum="1" Maximum="100" Value="50" Width="200" Margin="10"/>
                 <TextBox x:Name="CompressionTextBox" Style="{StaticResource CompactTextBoxStyle}" 
-                         Text="{Binding ElementName=CompressionSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}"/>
+                         Text="{Binding ElementName=CompressionSlider, Path=Value, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
             </StackPanel>
             
+            <!-- Прогресс-бар -->
             <ProgressBar x:Name="ProgressBar" Width="400" Height="20" Margin="10" Visibility="Collapsed" IsIndeterminate="True"/>
             
+            <!-- Изображения -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
                 <Image x:Name="OriginalImage" Width="500" Height="300" Margin="10"/>
                 <Image x:Name="CompressedImage" Width="500" Height="300" Margin="10"/>
