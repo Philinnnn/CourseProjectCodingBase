@@ -39,12 +39,13 @@
             </WrapPanel>
 
             <!-- Поле для вывода результата -->
-            <TextBox Name="ResultTextBox" 
-                     IsReadOnly="True" 
-                     Text="Результат выполнения задания" 
+            <TextBox Name="ResultTextBox"
+                     IsReadOnly="True"
+                     Text="Результат выполнения задания"
                      Style="{StaticResource StyledTextBox}" 
-                     TextWrapping="Wrap" 
-                     Height="200"/>
+                     TextWrapping="Wrap"
+                     Width="500"
+                     Height="250"/>
         </StackPanel>
     </Grid>
 </Window>
