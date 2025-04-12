@@ -45,7 +45,6 @@ namespace CourseProject.Lab4
             openFileDialog.Filter = "Text files (*.txt)|*.txt|Binary files (*.bin)|*.bin";
             if (openFileDialog.ShowDialog() == true)
             {
-
                 var fileDirectory = Path.GetDirectoryName(openFileDialog.FileName);
                 if (fileDirectory != null)
                 {
@@ -68,6 +67,11 @@ namespace CourseProject.Lab4
                             MessageBox.Show("Файл таблицы HuffmanTable.json не найден в " + fileDirectory, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                             return;
                         }
+                        if (huffmanCoder.HuffmanTable == null)
+                        {
+                            MessageBox.Show("Ошибка при загрузке таблицы Хаффмана.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
                         var decodedText = huffmanCoder.Decode(binaryContent);
                         inputText = decodedText;
                         encodedText = binaryContent;
@@ -78,14 +82,20 @@ namespace CourseProject.Lab4
                         inputText = File.ReadAllText(openFileDialog.FileName);
                         encodedText = huffmanCoder.Encode(inputText);
                         
+                        if (huffmanCoder.HuffmanTable == null)
+                        {
+                            MessageBox.Show("Ошибка при создании таблицы Хаффмана.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                            return;
+                        }
+
                         var huffmanTablePathText = Path.Combine(Path.GetDirectoryName(openFileDialog.FileName) ?? string.Empty, "HuffmanTable.json");
                         ExportHuffmanTableToJson(huffmanTablePathText);
                         InputFileSizeTextBox.Text = (CalculateFileSize(openFileDialog.FileName) / 1024).ToString("F2") + " KB";
                     }
                 }
 
-                InputTextBox.Text = inputText;
-                CompressedTextBox.Text = encodedText;
+                InputTextBox.Text = inputText ?? "Ошибка загрузки текста.";
+                CompressedTextBox.Text = encodedText ?? "Ошибка кодирования текста.";
             }
         }
         
@@ -111,6 +121,12 @@ namespace CourseProject.Lab4
                 MessageBox.Show("Пожалуйста, выберите директорию для сохранения файла.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+
+            if (string.IsNullOrEmpty(inputText))
+            {
+                MessageBox.Show("Нет данных для сохранения.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             
             var baseFileName = "DecodedFile.txt";
             var filePath = Path.Combine(saveDirectory, baseFileName);
@@ -124,6 +140,12 @@ namespace CourseProject.Lab4
             if (string.IsNullOrEmpty(saveDirectory))
             {
                 MessageBox.Show("Пожалуйста, выберите директорию для сохранения файла.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(encodedText))
+            {
+                MessageBox.Show("Нет данных для сохранения.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
             
@@ -157,3 +179,4 @@ namespace CourseProject.Lab4
         }
     }
 }
+
