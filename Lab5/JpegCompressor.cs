@@ -1,8 +1,9 @@
-﻿namespace CourseProject.Lab5
+﻿using System.Text;
+
+namespace CourseProject.Lab5
 {
     public static class JpegCompressor
     {
-        // Добавлен параметр quality
         public static (byte[] compressedPixels, byte[] restoredPixels, int width, int height, int stride) Compress(
             byte[] pixels, int width, int height, bool use420 = true, int quality = 75)
         {
@@ -54,7 +55,15 @@
             ApplyBlockwiseDCTAndQuant(ref CbSub, Q);
             ApplyBlockwiseDCTAndQuant(ref CrSub, Q);
 
+            // --- STEP 3.1: RLE Encoding ---
+            string encodedY = RleCoding.EncodeMatrix(Y);
+            string encodedCb = RleCoding.EncodeMatrix(CbSub);
+            string encodedCr = RleCoding.EncodeMatrix(CrSub);
+
             // --- STEP 4: Dequantize + IDCT ---
+            Y = RleCoding.DecodeMatrix(encodedY, height, width);
+            CbSub = RleCoding.DecodeMatrix(encodedCb, chromaHeight, chromaWidth);
+            CrSub = RleCoding.DecodeMatrix(encodedCr, chromaHeight, chromaWidth);
             ApplyBlockwiseIDCT(ref Y, Q);
             ApplyBlockwiseIDCT(ref CbSub, Q);
             ApplyBlockwiseIDCT(ref CrSub, Q);
@@ -116,7 +125,7 @@
                     restoredPixels[i + 3] = 255;
                 }
 
-            return (pixels, restoredPixels, width, height, stride);
+            return (Encoding.UTF8.GetBytes(encodedY + "|" + encodedCb + "|" + encodedCr), restoredPixels, width, height, stride);
         }
 
         private static void ApplyBlockwiseDCTAndQuant(ref double[,] data, double[,] Q)
@@ -218,7 +227,6 @@
             return f;
         }
 
-        // Обновленный метод для получения квантовочной матрицы с учетом качества
         private static double[,] GetQuantMatrix(int quality)
         {
             double[,] baseQ = new double[8, 8]
@@ -233,7 +241,6 @@
                 {72,92,95,98,112,100,103,99}
             };
 
-            // Вычисляем масштаб сжатия в зависимости от качества
             double scale = quality < 50 ? 200 - 2 * quality : 5000.0 / quality;
             double[,] Q = new double[8, 8];
             for (int i = 0; i < 8; i++)
