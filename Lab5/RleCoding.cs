@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Text;
 using System.Globalization;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CourseProject.Lab5
 {
@@ -48,8 +50,7 @@ namespace CourseProject.Lab5
             {
                 char character = encodedInput[i++];
                 StringBuilder countStr = new StringBuilder();
-
-                // Считываем число, может быть более одной цифры
+                
                 while (i < encodedInput.Length && char.IsDigit(encodedInput[i]))
                 {
                     countStr.Append(encodedInput[i]);
@@ -127,6 +128,53 @@ namespace CourseProject.Lab5
             }
 
             return matrix;
+        }
+
+        public string Encode(int[] input)
+        {
+            if (input == null || input.Length == 0)
+                return string.Empty;
+
+            StringBuilder encoded = new StringBuilder();
+            int count = 1;
+            int current = input[0];
+
+            for (int i = 1; i < input.Length; i++)
+            {
+                if (input[i] == current)
+                {
+                    count++;
+                }
+                else
+                {
+                    encoded.Append($"{current}:{count},");
+                    current = input[i];
+                    count = 1;
+                }
+            }
+
+            encoded.Append($"{current}:{count}");
+            return encoded.ToString();
+        }
+
+        public int[] DecodeToIntArray(string encodedInput)
+        {
+            if (string.IsNullOrEmpty(encodedInput))
+                return Array.Empty<int>();
+
+            var parts = encodedInput.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            List<int> decoded = new List<int>();
+
+            foreach (var part in parts)
+            {
+                var pair = part.Split(':');
+                int value = int.Parse(pair[0]);
+                int count = int.Parse(pair[1]);
+
+                decoded.AddRange(Enumerable.Repeat(value, count));
+            }
+
+            return decoded.ToArray();
         }
     }
 }

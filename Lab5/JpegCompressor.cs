@@ -1,9 +1,12 @@
-﻿namespace CourseProject.Lab5
+﻿using System;
+using System.Text;
+using CourseProject.Lab2;
+
+namespace CourseProject.Lab5
 {
     public static class JpegCompressor
     {
-        // Добавлен параметр quality
-        public static (byte[] compressedPixels, byte[] restoredPixels, int width, int height, int stride) Compress(
+        public static (byte[] compressedData, byte[] restoredPixels, int width, int height, int stride) Compress(
             byte[] pixels, int width, int height, bool use420 = true, int quality = 75)
         {
             int stride = width * 4;
@@ -54,12 +57,23 @@
             ApplyBlockwiseDCTAndQuant(ref CbSub, Q);
             ApplyBlockwiseDCTAndQuant(ref CrSub, Q);
 
-            // --- STEP 4: Dequantize + IDCT ---
+            // --- STEP 4: Zigzag + RLE + Huffman ---
+            var rle = new RleCoding();
+            var huffman = new HuffmanCoding();
+
+            var compressedY = CompressMatrix(Y, Q, rle, huffman);
+            var compressedCb = CompressMatrix(CbSub, Q, rle, huffman);
+            var compressedCr = CompressMatrix(CrSub, Q, rle, huffman);
+
+            // Сохраняем сжатые данные
+            var compressedData = CombineCompressedData(compressedY, compressedCb, compressedCr);
+
+            // --- STEP 5: Dequantize + IDCT ---
             ApplyBlockwiseIDCT(ref Y, Q);
             ApplyBlockwiseIDCT(ref CbSub, Q);
             ApplyBlockwiseIDCT(ref CrSub, Q);
 
-            // --- STEP 5: Upsampling с интерполяцией ---
+            // --- STEP 6: Upsampling с интерполяцией ---
             double[,] CbFull = new double[height, width];
             double[,] CrFull = new double[height, width];
 
@@ -96,7 +110,7 @@
                     }
                 }
 
-            // --- STEP 6: YCbCr to RGB ---
+            // --- STEP 7: YCbCr to RGB ---
             byte[] restoredPixels = new byte[height * stride];
             for (int y = 0; y < height; y++)
                 for (int x = 0; x < width; x++)
@@ -116,7 +130,63 @@
                     restoredPixels[i + 3] = 255;
                 }
 
-            return (pixels, restoredPixels, width, height, stride);
+            return (compressedData, restoredPixels, width, height, stride);
+        }
+
+        private static string CompressMatrix(double[,] matrix, double[,] Q, RleCoding rle, HuffmanCoding huffman)
+        {
+            int rows = matrix.GetLength(0);
+            int cols = matrix.GetLength(1);
+            StringBuilder compressed = new StringBuilder();
+
+            for (int y = 0; y < rows; y += 8)
+                for (int x = 0; x < cols; x += 8)
+                {
+                    double[,] block = GetBlock(matrix, x, y);
+                    double[,] quantizedBlock = QuantizeBlock(block, Q);
+                    int[] zigzagArray = ZigzagScan(quantizedBlock);
+                    string rleEncoded = rle.Encode(string.Join(",", zigzagArray));
+                    compressed.Append(huffman.Encode(rleEncoded));
+                    compressed.Append(";");
+                }
+
+            return compressed.ToString();
+        }
+
+        private static double[,] QuantizeBlock(double[,] block, double[,] Q)
+        {
+            double[,] quantized = new double[8, 8];
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    quantized[i, j] = Math.Round(block[i, j] / Q[i, j]);
+            return quantized;
+        }
+
+        private static int[] ZigzagScan(double[,] block)
+        {
+            int[] zigzag = new int[64];
+            int[,] zigzagOrder = {
+                { 0, 1, 5, 6,14,15,27,28 },
+                { 2, 4, 7,13,16,26,29,42 },
+                { 3, 8,12,17,25,30,41,43 },
+                { 9,11,18,24,31,40,44,53 },
+                {10,19,23,32,39,45,52,54 },
+                {20,22,33,38,46,51,55,60 },
+                {21,34,37,47,50,56,59,61 },
+                {35,36,48,49,57,58,62,63 }
+            };
+
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    zigzag[zigzagOrder[i, j]] = (int)block[i, j];
+
+            return zigzag;
+        }
+
+        private static byte[] CombineCompressedData(string y, string cb, string cr)
+        {
+            string combined = $"{y}|{cb}|{cr}";
+            return Encoding.UTF8.GetBytes(combined);
         }
 
         private static void ApplyBlockwiseDCTAndQuant(ref double[,] data, double[,] Q)
