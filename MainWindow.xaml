@@ -15,13 +15,12 @@
                    Margin="0,10,0,0"/>
 
         <!-- Центральная сетка с кнопками -->
-        <UniformGrid Rows="2" Columns="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <UniformGrid Rows="3" Columns="2" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Button Content="Анализ энтропии" Tag="1" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
             <Button Content="Алгоритмы кодирования" Tag="2" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
             <Button Content="Шумовой канал и фильтрация" Tag="3" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
             <Button Content="Сжатие и архивация текста" Tag="4" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
             <Button Content="Сжатие изображений" Tag="5" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
-            <Button Content="Лабораторная 6" Tag="6" Style="{StaticResource GradientButtonStyle}" Click="OpenLab"/>
         </UniformGrid>
     </DockPanel>
 </Window>
