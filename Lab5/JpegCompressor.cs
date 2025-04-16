@@ -64,8 +64,7 @@ namespace CourseProject.Lab5
             var compressedY = CompressMatrix(Y, Q, rle, huffman);
             var compressedCb = CompressMatrix(CbSub, Q, rle, huffman);
             var compressedCr = CompressMatrix(CrSub, Q, rle, huffman);
-
-            // Сохраняем сжатые данные
+            
             var compressedData = CombineCompressedData(compressedY, compressedCb, compressedCr);
 
             // --- STEP 5: Dequantize + IDCT ---
@@ -73,7 +72,7 @@ namespace CourseProject.Lab5
             ApplyBlockwiseIDCT(ref CbSub, Q);
             ApplyBlockwiseIDCT(ref CrSub, Q);
 
-            // --- STEP 6: Upsampling с интерполяцией ---
+            // --- STEP 6: Upsampling ---
             double[,] CbFull = new double[height, width];
             double[,] CrFull = new double[height, width];
 
